@@ -1,0 +1,155 @@
+#include "Palette.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "kernel.h"
+#include "swis.h"
+
+#include "CVector.h"
+
+static _kernel_oserror *err;
+static _kernel_swi_regs rin, rout;
+
+unsigned int *g_fogTable;
+
+#define HEX_VAL(x) (((x) >> 16) & 0xFF), (((x) >> 8) & 0xFF), ((x) & 0xFF)
+
+static unsigned int inputPalette[16] = {
+    (0x004488), // low blue
+    (0x3377bb), // mid blue
+    (0x77bbff), // high blue
+    (0x115511), // low green
+    (0x448800), // mid green
+    (0x88cc00), // high green
+    (0x66aaee), // sky color
+    (0x155A78),
+    (0x2A7190),
+    (0x4088A8),
+    (0x4698BD),
+    (0x4DA9D2),
+    (0x54BAE8),
+    (0x88CCE8),
+    (0xA8ECE8),
+    (0xE8ECE8),
+};
+
+void SetupPaletteLookup(int allocating)
+{
+    if (allocating)
+    {
+        printf("Allocating tables required for 2x2 bayer lookup table...\n");
+        cvector_reserve(g_fogTable, 64 * 2 * 256 * 4);
+        printf("Done.\n");
+    }
+    else
+    {
+        printf("Freeing tables required for Palette...\n");
+        cvector_free(g_fogTable);
+        printf("Done.\n");
+    }
+}
+
+// The Archimedes 256-color palette is only slightly tweakable. We cant set 
+// 16 colors to (mostly) any value we want, with the rest being a sort of 
+// 'house mix' of other colors and tints. 
+void SetPalette(void)
+{
+    typedef struct PalEntry
+    {
+        unsigned char VDU, INDEX, MODE, R, G, B;
+    } PalEntry;
+
+    PalEntry pal;
+    int i = 0;
+
+    pal.VDU = 19;
+    pal.MODE = 16;
+
+    rin.r[0] = (unsigned int)&pal;
+    rin.r[1] = 6;
+
+    for (i = 0; i < 16; ++i)
+    {
+        pal.R = (inputPalette[i] >> 16) & 0xFF;
+        pal.G = (inputPalette[i] >> 8) & 0xFF;
+        pal.B = (inputPalette[i]) & 0xFF;
+        pal.INDEX = i;
+
+        err = _kernel_swi(OS_WriteN, &rin, &rout);
+    }
+}
+
+void Save256()
+{
+    int i, j, h;
+    char hex[200];
+    FILE *file;
+
+    unsigned char originalFound[16] = {0, 0, 0, 0, 0, 0, 0, 0,
+                                       0, 0, 0, 0, 0, 0, 0, 0};
+
+    file = fopen("colors_txt", "w");
+    if (!file)
+        return;
+
+    for (i = 0; i < 256; i++)
+    {
+        rin.r[0] = i;
+        rin.r[1] = 16;
+        err = _kernel_swi(OS_ReadPalette, &rin, &rout);
+        h = ((rout.r[2] >> 8) & 0xFF) << 16 | ((rout.r[2] >> 16) & 0xFF) << 8 |
+            ((rout.r[2] >> 24) & 0xFF);
+
+        for (j = 0; j < 16; ++j)
+        {
+            if (h == inputPalette[j])
+            {
+                ++originalFound[j];
+                break;
+            }
+        }
+
+        sprintf(hex, "%06X\n", h);
+        fputs(hex, file);
+    }
+
+    for (i = 0; i < 16; ++i)
+    {
+        if (originalFound[i] > 0)
+            sprintf(hex, "%d: %d times\n", i, originalFound[i]);
+        else
+            sprintf(hex, "%d: not found\n", i);
+
+        fputs(hex, file);
+    }
+
+    fclose(file);
+}
+
+/**
+ * Loads a lookup table for the bayer dithering effect.
+ * @param filename The name of the file to load.
+ */
+int LoadFogLookup(const char *filename)
+{
+    FILE *file;
+    char buf[256];
+    char *ptr;
+
+    sprintf(&buf[0], "%s.%s", gBaseDirectoryPath, filename);
+    ptr = &buf[0];
+
+    file = fopen(ptr, "r");
+    if (file == NULL)
+    {
+        printf("Failed to open file: %s\n", ptr);
+        return 1;
+    }
+
+    fread((void *)g_fogTable, sizeof(unsigned int), (64 * 2 * 256), file);
+
+    fclose(file);
+
+    return 0;
+}

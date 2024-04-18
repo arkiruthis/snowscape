@@ -1,0 +1,13 @@
+#ifndef PALETTE_H
+#define PALETTE_H
+
+extern char *gBaseDirectoryPath;
+
+extern unsigned int *g_fogTable;
+
+void SetupPaletteLookup(int allocating);
+void SetPalette(void);
+void Save256(void);
+int LoadFogLookup(const char *filename);
+
+#endif // PALETTE_H

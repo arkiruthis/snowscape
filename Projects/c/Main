@@ -1,0 +1,206 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+
+#include "kernel.h"
+#include "swis.h"
+
+#include "Mesh.h"
+#include "Palette.h"
+#include "Render.h"
+
+// ASM Routines
+extern void VDUSetup(void);
+extern void SetBuffers(int oneOver, int edgeList, int fogTable);
+extern void UpdateMemAddress(int screenStart, int screenMax);
+extern void ReserveScreenBanks(void);
+extern void SwitchScreenBank(void);
+extern void ClearScreen(int color, int fullclear);
+extern int KeyPress(int keyCode);
+
+// SWI access
+_kernel_oserror *err;
+_kernel_swi_regs rin, rout;
+
+char *gBaseDirectoryPath = NULL;
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+int main(int argc, char *argv[])
+{
+    int i, swi_data[10], isRunning = 1;
+    int heading = 498, pitch = -53;
+    int *edgeList = NULL;
+    V3D eyePos, direction;
+    MAT43 mat;
+    int mouseX, mouseY;
+    unsigned char block[9];
+
+    SetupMathsGlobals(1);
+    for (i = 0; i < 1024; ++i)
+    {
+        g_SineTable[i] = float2fix(sin((i * M_PI * 2.0) / 1024.0));
+        g_OneOver[i] = (i == 0) ? float2fix(1.f) : float2fix(1.f / i);
+    }
+
+    cvector_reserve(edgeList, 256);
+
+    SetupPaletteLookup(1);
+    SetupRender(1);
+    GenerateTerrain();
+    
+    SetBuffers((unsigned int)(g_OneOver), (unsigned int)(edgeList), (unsigned int)(g_fogTable)); // Store these on the ASM side for use there
+
+    gBaseDirectoryPath = getenv("Game$Dir");
+    if (LoadFogLookup("assets.lookup") != 0)
+    {
+        printf("ERROR: Failed to load fog lookup table.\n");
+        return 1;
+    }
+    
+    // (void)getchar(); // Uncomment to pause here and read data output
+
+    // Disable the default escape handler
+    rin.r[0] = 229;
+    rin.r[1] = 0xFFFFFFFF;
+    err      = _kernel_swi(OS_Byte, &rin, &rout);
+
+    VDUSetup();
+    ReserveScreenBanks();
+    SwitchScreenBank();
+    SetPalette();
+    // Save256(); // Uncomment to save the VIDC generated palette to a file
+
+    // Obtain details about the current screen mode
+    swi_data[0] = (int)148;         // screen base address
+    swi_data[1] = (int)-1;          // terminate query
+    rin.r[0] = (int)(&swi_data[0]); // Start of query
+    rin.r[1] = (int)(&swi_data[3]); // Results
+    err = _kernel_swi(OS_ReadVduVariables, &rin, &rout);
+    UpdateMemAddress(swi_data[3], swi_data[4]);
+
+    for (i = 0; i < 2; ++i)
+    {
+        SwitchScreenBank();             // Swap draw buffer with display buffer
+        rin.r[0] = (int)(&swi_data[0]); // Get the new screen start address
+        rin.r[1] = (int)(&swi_data[3]); // Results
+        err = _kernel_swi(OS_ReadVduVariables, &rin, &rout);
+        UpdateMemAddress(swi_data[3], swi_data[4]); // Pass these to the ASM side
+        ClearScreen(0, 1);                          // Clear the new draw buffer
+    }
+
+    eyePos.x = float2fix((MAPW << TILESHIFT) + (.5f)) >> 1;
+    eyePos.y = GetHeight(&eyePos);
+    eyePos.z = float2fix((MAPW << TILESHIFT) + (.5f)) >> 1;
+
+#ifdef TIMING_LOG
+    gTimerLog.biggestVertex = 0;
+#endif // TIMING_LOG    
+
+    // Set an infinite screen box so the mouse doesn't stop at the screen edge.
+    block[0] = 0x01; // Reason code
+    block[1] = 0x00; // Left LSB
+    block[2] = 0x80; // Left MSB
+    block[3] = 0x00; // Bottom LSB
+    block[4] = 0x80; // Bottom MSB
+    block[5] = 0xFF; // Right LSB
+    block[6] = 0x7F; // Right MSB
+    block[7] = 0xFF; // Top LSB
+    block[8] = 0x7F; // Top MSB    
+    rin.r[0] = 21;
+    rin.r[1] = (int)(&block[0]);
+    err = _kernel_swi(OS_Word, &rin, &rout);
+
+    // Get initial mouse position
+    err = _kernel_swi(OS_Mouse, &rin, &rout);
+    mouseX = rout.r[0];
+    mouseY = rout.r[1];
+    eyePos.y = GetHeight(&eyePos); // Start at the correct height
+
+    if (err == NULL)
+    {
+        while (isRunning)
+        {
+            err = _kernel_swi(OS_Mouse, &rin, &rout); // Get the mouse position
+            heading += clamp((rout.r[0] - mouseX) >> 7, -32, 32);
+            pitch += clamp((rout.r[1] - mouseY) >> 7, -32, 32);
+            pitch = clamp(pitch, -100, 100);
+
+            if (KeyPress(112)) // Escape
+                isRunning = 0;
+            
+            if(rout.r[2] & 4) // Left mouse button - Walk forward
+            {
+                eyePos.x += (fixcos(heading)) << 1;
+                eyePos.z -= (fixsin(heading)) << 1;
+                eyePos.y = GetHeight(&eyePos);
+            }
+            if(rout.r[2] & 1) // Right mouse button - Walk backward
+            {
+                eyePos.x -= (fixcos(heading));
+                eyePos.z += (fixsin(heading));
+                eyePos.y = GetHeight(&eyePos);
+            }
+
+            SwitchScreenBank();             // Swap draw buffer with display buffer
+            rin.r[0] = (int)(&swi_data[0]); // Get the new screen start address
+            rin.r[1] = (int)(&swi_data[3]); // Results
+            err = _kernel_swi(OS_ReadVduVariables, &rin, &rout);
+            UpdateMemAddress(swi_data[3], swi_data[4]); // Pass these to the ASM side
+
+            direction.x = fixcos(heading);
+            direction.y = fixsin(pitch);
+            direction.z = -fixsin(heading);
+
+            LookAt(&eyePos, &direction, &mat); // TODO - SLOWWWWWW - 2 cross products in here
+
+            ClearScreen(0xC6C6C6C6, 1); // Clear the new draw buffer
+
+            RenderModel(&mat, &eyePos, heading); // Main render
+            
+#ifdef TIMING_LOG
+            {
+                rin.r[0] = 30;
+                err = _kernel_swi(OS_WriteC, &rin, &rout);
+
+                // printf("DISt     :  %d", dist);
+                printf("\nTRANSFORM TILES : %d", gTimerLog.transformTiles);
+                printf("\nSUBMIT TRIANGLES: %d", gTimerLog.submitRenderTriangles);
+                printf("\nCLIPPING QUEUE  : %d", gTimerLog.clippingQueue);
+                printf("\n3D PROJECTION   : %d", gTimerLog.project3D);
+                printf("\nSCENE RENDER    : %d", gTimerLog.sceneRender);
+                printf("\nBIGGEST VERTEX  : %d", gTimerLog.biggestVertex);
+                printf("\nCLIPPED COUNT   : %d", gTimerLog.clippedCount);
+            }
+#endif // TIMING_LOG
+        }
+    }
+    else
+    {
+        printf("ERROR: %s", err->errmess);
+    }
+
+    // Return to text mode
+    rin.r[0] = 22;
+    err      = _kernel_swi(OS_WriteC, &rin, &rout);
+    rin.r[0] = 0;
+    err      = _kernel_swi(OS_WriteC, &rin, &rout);
+
+    // Re-enable the default escape handler
+    rin.r[0] = 229;
+    rin.r[1] = 0xFFFFFFFF;
+    err      = _kernel_swi(OS_Byte, &rin, &rout);    
+
+    // Free up memory that was allocated
+    cvector_free(edgeList);
+    DeAllocateTerrain();
+    SetupMathsGlobals(0);
+    SetupPaletteLookup(0);
+    printf("Heading: %d, Pitch: %d\n", heading, pitch);
+
+    // (void)getchar(); // Uncomment to pause here and read data output
+
+    return 0;
+}
