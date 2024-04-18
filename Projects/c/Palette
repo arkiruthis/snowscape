@@ -50,9 +50,9 @@ void SetupPaletteLookup(int allocating)
     }
 }
 
-// The Archimedes 256-color palette is only slightly tweakable. We cant set 
-// 16 colors to (mostly) any value we want, with the rest being a sort of 
-// 'house mix' of other colors and tints. 
+// The Archimedes 256-color palette is only slightly tweakable. We cant set
+// 16 colors to (mostly) any value we want, with the rest being a sort of
+// 'house mix' of other colors and tints.
 void SetPalette(void)
 {
     typedef struct PalEntry

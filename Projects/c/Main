@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     SetupPaletteLookup(1);
     SetupRender(1);
     GenerateTerrain();
-    
+
     SetBuffers((unsigned int)(g_OneOver), (unsigned int)(edgeList), (unsigned int)(g_fogTable)); // Store these on the ASM side for use there
 
     gBaseDirectoryPath = getenv("Game$Dir");
@@ -59,13 +59,13 @@ int main(int argc, char *argv[])
         printf("ERROR: Failed to load fog lookup table.\n");
         return 1;
     }
-    
+
     // (void)getchar(); // Uncomment to pause here and read data output
 
     // Disable the default escape handler
     rin.r[0] = 229;
     rin.r[1] = 0xFFFFFFFF;
-    err      = _kernel_swi(OS_Byte, &rin, &rout);
+    err = _kernel_swi(OS_Byte, &rin, &rout);
 
     VDUSetup();
     ReserveScreenBanks();
@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 
 #ifdef TIMING_LOG
     gTimerLog.biggestVertex = 0;
-#endif // TIMING_LOG    
+#endif // TIMING_LOG
 
     // Set an infinite screen box so the mouse doesn't stop at the screen edge.
     block[0] = 0x01; // Reason code
@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
     block[5] = 0xFF; // Right LSB
     block[6] = 0x7F; // Right MSB
     block[7] = 0xFF; // Top LSB
-    block[8] = 0x7F; // Top MSB    
+    block[8] = 0x7F; // Top MSB
     rin.r[0] = 21;
     rin.r[1] = (int)(&block[0]);
     err = _kernel_swi(OS_Word, &rin, &rout);
@@ -130,14 +130,14 @@ int main(int argc, char *argv[])
 
             if (KeyPress(112)) // Escape
                 isRunning = 0;
-            
-            if(rout.r[2] & 4) // Left mouse button - Walk forward
+
+            if (rout.r[2] & 4) // Left mouse button - Walk forward
             {
                 eyePos.x += (fixcos(heading)) << 1;
                 eyePos.z -= (fixsin(heading)) << 1;
                 eyePos.y = GetHeight(&eyePos);
             }
-            if(rout.r[2] & 1) // Right mouse button - Walk backward
+            if (rout.r[2] & 1) // Right mouse button - Walk backward
             {
                 eyePos.x -= (fixcos(heading));
                 eyePos.z += (fixsin(heading));
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
             ClearScreen(0xC6C6C6C6, 1); // Clear the new draw buffer
 
             RenderModel(&mat, &eyePos, heading); // Main render
-            
+
 #ifdef TIMING_LOG
             {
                 rin.r[0] = 30;
@@ -184,14 +184,14 @@ int main(int argc, char *argv[])
 
     // Return to text mode
     rin.r[0] = 22;
-    err      = _kernel_swi(OS_WriteC, &rin, &rout);
+    err = _kernel_swi(OS_WriteC, &rin, &rout);
     rin.r[0] = 0;
-    err      = _kernel_swi(OS_WriteC, &rin, &rout);
+    err = _kernel_swi(OS_WriteC, &rin, &rout);
 
     // Re-enable the default escape handler
     rin.r[0] = 229;
     rin.r[1] = 0xFFFFFFFF;
-    err      = _kernel_swi(OS_Byte, &rin, &rout);    
+    err = _kernel_swi(OS_Byte, &rin, &rout);
 
     // Free up memory that was allocated
     cvector_free(edgeList);

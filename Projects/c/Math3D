@@ -6,7 +6,7 @@
 
 #include "CVector.h"
 
-fix *g_OneOver;    // Reciprocal table (for max screen height of 256 in Mode 13)
+fix *g_OneOver;   // Reciprocal table (for max screen height of 256 in Mode 13)
 fix *g_SineTable; // SIN table. Offset used for COS.
 
 void SetupMathsGlobals(int isAllocating)
@@ -38,9 +38,9 @@ void SetIdentity(MAT43 *mat)
     mat->m31 = 0;
     mat->m32 = 0;
     mat->m33 = 65536;
-    mat->tx  = 0;
-    mat->ty  = 0;
-    mat->tz  = 0;
+    mat->tx = 0;
+    mat->ty = 0;
+    mat->tz = 0;
 }
 
 void SetScale(MAT43 *mat, fix sx, fix sy, fix sz)
@@ -83,9 +83,9 @@ void EulerToMat(MAT43 *mat, int heading, int pitch, int bank)
 void RotateAxis(MAT43 *mat, V3D *axis, int angle)
 {
     fix s, c, a, ax, ay, az;
-    s  = fixsin(angle);
-    c  = fixcos(angle);
-    a  = 65536 - c;
+    s = fixsin(angle);
+    c = fixcos(angle);
+    a = 65536 - c;
     ax = fixmult(a, axis->x);
     ay = fixmult(a, axis->y);
     az = fixmult(a, axis->z);
@@ -157,9 +157,9 @@ void Normal(V3D *a, V3D *b, V3D *c, V3D *n)
 void Normalize(V3D *v)
 {
     double len, x, y, z;
-    x   = fix2float(v->x);
-    y   = fix2float(v->y);
-    z   = fix2float(v->z);
+    x = fix2float(v->x);
+    y = fix2float(v->y);
+    z = fix2float(v->z);
     len = sqrt(x * x + y * y + z * z);
 
     v->x = float2fix((float)(x / len));

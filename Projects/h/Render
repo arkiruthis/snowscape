@@ -9,7 +9,7 @@
 
 void SetupRender(int allocating);
 void RenderModel(MAT43 *mv, V3D *eyePos, int yaw);
-void MultV3DProj(V3D* v, int *clipflags);
+void MultV3DProj(V3D *v, int *clipflags);
 
 // How many tiles around the look center. i.e., double this for the max tiles ahead.
 // The bigger the number, the more tiles will be rendered.
@@ -23,10 +23,11 @@ void MultV3DProj(V3D* v, int *clipflags);
 #define SUBRANGE ((SCANRANGE - 1) << 8)
 
 // Uncomment the following to enable the timing log.
-//#define TIMING_LOG 1
+// #define TIMING_LOG 1
 
 #ifdef TIMING_LOG
-typedef struct TimerLog {
+typedef struct TimerLog
+{
     int transformTiles;
     int submitRenderTriangles;
     int clippingQueue;

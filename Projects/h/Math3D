@@ -9,21 +9,21 @@
 #define M_PI 3.1415926535
 #endif // M_PI
 
-#define MAX_CLIPPING_VERTS 10 
+#define MAX_CLIPPING_VERTS 10
 #define MAX_CLIPPING_TRIS 10
 #define CLIP_LEFT 0x01
 #define CLIP_RIGHT 0x02
 #define CLIP_TOP 0x04
 #define CLIP_BOTTOM 0x08
 
-// We are working with a signed 32-bit fixed-point value which is divided halfway 
+// We are working with a signed 32-bit fixed-point value which is divided halfway
 // to offer 15 bits of integer (1 bit for sign) and 16 bits of mantissa
 typedef signed int fix;
 
 // Fixed point utilities
 #define int2fix(x) ((x) << 16)
 #define fix2int(x) ((x) >> 16)
-#define float2fix(a) (fix)((a)*65536.f)
+#define float2fix(a) (fix)((a) * 65536.f)
 #define fix2float(a) (float)((a) / 65536.f)
 #define fixmult(a, b) (fix)(((a) >> 8) * ((b) >> 8))
 #define fixmultINTL(a, b) (fix)(((a) >> 16) * (b))
@@ -44,7 +44,7 @@ typedef signed int fix;
 // SIN/COS lookups
 #define SINETABLE_SIZE 1024
 #define _SINETABLE_SIZE 1023
-#define fixsin(a) g_SineTable[(a)&_SINETABLE_SIZE]
+#define fixsin(a) g_SineTable[(a) & _SINETABLE_SIZE]
 #define fixcos(a) g_SineTable[((a) + 256) & _SINETABLE_SIZE]
 extern fix *g_SineTable;
 
@@ -67,29 +67,29 @@ extern fix *g_OneOver;
 #define orient2dint(a, b, c) (((b).x - (a).x) * ((c).y - (a).y)) - (((b).y - (a).y) * ((c).x - (a).x))
 
 #define subtractV3D(a, b, c) \
-  (c).x = (a).x - (b).x;     \
-  (c).y = (a).y - (b).y;     \
-  (c).z = (a).z - (b).z;
+    (c).x = (a).x - (b).x;   \
+    (c).y = (a).y - (b).y;   \
+    (c).z = (a).z - (b).z;
 
 typedef struct V2D
 {
-  fix x;
-  fix y;
+    fix x;
+    fix y;
 } V2D;
 
 typedef struct V3D
 {
-  fix x;
-  fix y;
-  fix z;
+    fix x;
+    fix y;
+    fix z;
 } V3D;
 
 typedef struct V4D
 {
-	fix x;
-	fix y;
-	fix z;
-	fix w;
+    fix x;
+    fix y;
+    fix z;
+    fix w;
 } V4D;
 
 #define TRI_INTENSITY_MASK 0xFF
@@ -101,34 +101,33 @@ typedef struct V4D
 
 typedef struct TRI
 {
-  unsigned short a, b, c, flags;
-  V2D centerpoint;
-  fix depth;
-  void *next;
+    unsigned short a, b, c, flags;
+    V2D centerpoint;
+    fix depth;
+    void *next;
 } TRI;
 
 typedef struct POLYGON
 {
-	V3D verts[MAX_CLIPPING_VERTS];
-	int numVerts;
+    V3D verts[MAX_CLIPPING_VERTS];
+    int numVerts;
 } POLYGON;
 
 typedef struct MAT43
 {
-  fix m11, m12, m13;
-  fix m21, m22, m23;
-  fix m31, m32, m33;
-  fix tx, ty, tz;
+    fix m11, m12, m13;
+    fix m21, m22, m23;
+    fix m31, m32, m33;
+    fix tx, ty, tz;
 } MAT43;
 
 typedef struct MAT44
 {
-  fix m11, m12, m13, m14;
-  fix m21, m22, m23, m24;
-  fix m31, m32, m33, m34;
-  fix m41, m42, m43, m44;
+    fix m11, m12, m13, m14;
+    fix m21, m22, m23, m24;
+    fix m31, m32, m33, m34;
+    fix m41, m42, m43, m44;
 } MAT44;
-
 
 void SetupMathsGlobals(int isAllocating);
 
@@ -148,7 +147,7 @@ fix DotProduct(const V3D *v1, const V3D *v2);
 V3D SubV3D(const V3D *a, const V3D *b);
 V3D CrossProductV3D(const V3D *a, const V3D *b);
 void LookAt(const V3D *eyePos, const V3D *forward, MAT43 *mat);
-void PerspectiveProjection(MAT44* mat, float fov, float aspect, float znear, float zfar);
+void PerspectiveProjection(MAT44 *mat, float fov, float aspect, float znear, float zfar);
 
 #endif // MATH3D_H
 

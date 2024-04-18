@@ -20,11 +20,11 @@ void GenerateTerrain()
     TRI face;
     int vertcounter = 0, facecounter = 0;
     fix tl, tr, bl, br;
-    unsigned char range[48] = {49,49,49,49, 89, 89, 89, 89, 90, 90, 91, 91, 92, 92, 118, 118,
-                                32, 32, 32, 32, 35, 35, 40, 40, 68, 68, 68, 112, 112, 115, 115, 113,
-                                160, 160, 160, 160, 161, 161, 161, 161, 194, 194, 194, 194, 247, 247, 255, 255};
+    unsigned char range[48] = {49, 49, 49, 49, 89, 89, 89, 89, 90, 90, 91, 91, 92, 92, 118, 118,
+                               32, 32, 32, 32, 35, 35, 40, 40, 68, 68, 68, 112, 112, 115, 115, 113,
+                               160, 160, 160, 160, 161, 161, 161, 161, 194, 194, 194, 194, 247, 247, 255, 255};
 
-    //srand(time(NULL));
+    // srand(time(NULL));
     srand(55555);
 
     printf("Reserving %d bytes for Terrain Vertices...\n", MAPW * MAPW * sizeof(V3D));
@@ -34,17 +34,17 @@ void GenerateTerrain()
     printf("Reserving %d bytes for transformed Terrain Vertices...\n", MAPW * MAPW * sizeof(V3D));
     cvector_reserve(g_Mesh.verts_transformed, MAPW * MAPW);
 
-	for (j = 0; j < MAPW; ++j)
-		for (i = 0; i < MAPW; ++i)
-		{
-			g_Mesh.verts[IX(i, j)].x = int2fix(i << TILESHIFT);
-			g_Mesh.verts[IX(i, j)].z = int2fix(j << TILESHIFT);
+    for (j = 0; j < MAPW; ++j)
+        for (i = 0; i < MAPW; ++i)
+        {
+            g_Mesh.verts[IX(i, j)].x = int2fix(i << TILESHIFT);
+            g_Mesh.verts[IX(i, j)].z = int2fix(j << TILESHIFT);
             g_Mesh.verts[IX(i, j)].y = 0;
-		}
+        }
 
     bsize = MAPW / 4;
     csize = bsize / 2;
-    rnd   = int2fix(MAPW);
+    rnd = int2fix(MAPW);
 
     while (bsize > 1)
     {
@@ -69,8 +69,8 @@ void GenerateTerrain()
         for (i = 0; i < MAPW; i += bsize)
             for (j = 0; j < MAPW; j += bsize)
             {
-                k = g_Mesh.verts[IX(i + csize, j)].y + 
-                    g_Mesh.verts[IX(i, j + csize)].y + 
+                k = g_Mesh.verts[IX(i + csize, j)].y +
+                    g_Mesh.verts[IX(i, j + csize)].y +
                     g_Mesh.verts[IX(i + bsize, j + csize)].y +
                     g_Mesh.verts[IX(i + csize, j + bsize)].y;
                 k >>= 2;
@@ -101,49 +101,54 @@ void GenerateTerrain()
 
             // Midwinter used a |/|\| pattern for the terrain.
             //                  |\|/|
-            if ((i + j) & 1) 
-			{
-                /* TL 
+            if ((i + j) & 1)
+            {
+                /* TL
                     ___
                    |  /
                    | /
                    |/
                 */
 
-				face.a = i + j * (MAPW);
-				face.b = (i + 1) + j * (MAPW);
-				face.c = i + (j + 1) * (MAPW);
-				face.next = NULL;
+                face.a = i + j * (MAPW);
+                face.b = (i + 1) + j * (MAPW);
+                face.c = i + (j + 1) * (MAPW);
+                face.next = NULL;
                 face.centerpoint.x = int2fix(i << TILESHIFT) + int2fix(4);
                 face.centerpoint.y = int2fix(j << TILESHIFT) + int2fix(4);
                 k = clamp(12 + (((tl - tr) + (tl - bl)) >> 17), 0, 15);
-                if (tl > SNOWLEVEL) k += 32;
-                else if (tl > SANDLEVEL) k += 16;
+                if (tl > SNOWLEVEL)
+                    k += 32;
+                else if (tl > SANDLEVEL)
+                    k += 16;
 
                 face.flags = range[k];
                 g_Mesh.faces[facecounter++] = face;
 
                 /* BR
-                   
+
                      /|
                     / |
-                   /__| 
+                   /__|
                 */
 
-				face.a = (i + 1) + (j + 1) * (MAPW);
-				face.b = i + (j + 1) * (MAPW);
-				face.c = (i + 1) + j * (MAPW);
-				face.next = NULL;
+                face.a = (i + 1) + (j + 1) * (MAPW);
+                face.b = i + (j + 1) * (MAPW);
+                face.c = (i + 1) + j * (MAPW);
+                face.next = NULL;
                 face.centerpoint.x = int2fix(i << TILESHIFT) + int2fix(12);
                 face.centerpoint.y = int2fix(j << TILESHIFT) + int2fix(12);
                 k = clamp(12 + (((bl - br) + (tr - br)) >> 17), 0, 15);
-                if (br > SNOWLEVEL) k += 32;
-                else if (br > SANDLEVEL) k += 16;
+                if (br > SNOWLEVEL)
+                    k += 32;
+                else if (br > SANDLEVEL)
+                    k += 16;
                 face.flags = range[k];
                 g_Mesh.faces[facecounter++] = face;
-			}
-			else
-			{
+            }
+            else
+            {
+                
                 /* TR
                    ___
                    \  |
@@ -158,16 +163,18 @@ void GenerateTerrain()
                 face.centerpoint.x = int2fix(i << TILESHIFT) + int2fix(12);
                 face.centerpoint.y = int2fix(j << TILESHIFT) + int2fix(4);
                 k = clamp(12 + (((tl - tr) + (tr - br)) >> 16), 0, 15);
-                if (tr > SNOWLEVEL) k += 32;
-                else if (tr > SANDLEVEL) k += 16;
+                if (tr > SNOWLEVEL)
+                    k += 32;
+                else if (tr > SANDLEVEL)
+                    k += 16;
                 face.flags = range[k];
                 g_Mesh.faces[facecounter++] = face;
 
                 /* BL
-                  
+
                    |\
                    | \
-                   |__\ 
+                   |__\
                 */
 
                 face.a = i + j * (MAPW);
@@ -177,11 +184,13 @@ void GenerateTerrain()
                 face.centerpoint.x = int2fix(i << TILESHIFT) + int2fix(4);
                 face.centerpoint.y = int2fix(j << TILESHIFT) + int2fix(12);
                 k = clamp(12 + (((bl - br) + (tl - bl)) >> 16), 0, 15);
-                if (bl > SNOWLEVEL) k += 32;
-                else if (bl > SANDLEVEL) k += 16;
+                if (bl > SNOWLEVEL)
+                    k += 32;
+                else if (bl > SANDLEVEL)
+                    k += 16;
                 face.flags = range[k];
                 g_Mesh.faces[facecounter++] = face;
-			}
+            }
         }
 
     // printf("Preparing Lighting pass...\n");
@@ -197,7 +206,7 @@ void GenerateTerrain()
     //     // _verts[2] = g_Mesh.verts[g_Mesh.faces[i].c];
     //     // Normal(&_verts[0], &_verts[2], &_verts[1], &g_Mesh.faces[i].normal);
     //     // Normalize(&g_Mesh.faces[i].normal);
-        
+
     //     g_Mesh.faces[i].flags = ; //  min(max(0, (int)(fix2float(DotProduct(&g_Mesh.faces[i].normal, &light)) * 16.f)),15);
     // }
     // printf("Done.\n");
@@ -245,8 +254,8 @@ fix GetHeight(V3D *eyePos)
             A = g_Mesh.verts[IX(mapX, mapZ)].y;
             B = fixmultINTL(B, localX);
             C = fixmultINTL(C, localZ);
-        } 
-        else 
+        }
+        else
         {
             // Bottom Right Triangle
             // Flip the local coords
@@ -277,8 +286,8 @@ fix GetHeight(V3D *eyePos)
             A = g_Mesh.verts[IX(mapX + 1, mapZ)].y;
             B = fixmultINTL(B, localX);
             C = fixmultINTL(C, localZ);
-        } 
-        else 
+        }
+        else
         {
             // Bottom Left Triangle
             // Flip the local coords
