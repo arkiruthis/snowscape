@@ -11,10 +11,11 @@ Click on the image for a YouTube recording in Arculator\
 [![Click on the image for a YouTube recording in Arculator](terrain.png)](http://www.youtube.com/watch?v=fiJSxuPCPes "YouTube Video")
 
 ### QuickStart and Controls
-Thanks to the amazing [Archimedes Live!](https://archi.medes.live/) you can run a prebuilt version directly in the browser. The following ADF files can be loaded via the emulator and run from the emulated floppy drive.
+Thanks to the amazing [Archimedes Live!](https://archi.medes.live/) you can run a prebuilt version directly in the browser.
 
-[SnowScape A5000 Version (ADF)](https://github.com/arkiruthis/snowscape/releases/download/v1.0.0/snowscapeA5000.adf) (further draw distance)\
-[SnowScape A3020 Version (ADF)](https://github.com/arkiruthis/snowscape/releases/download/v1.0.0/snowscapeA3020.adf) (more limited, but good performance on lower end machines)
+[SnowScape A5000 Version](https://archi.medes.live#preset=a5000&ff=14400&disc=https://raw.githubusercontent.com/arkiruthis/snowscape/76909172634979cdaf4dc8cd4e31dbfa24f17d27/Images/snowscapeA5000.adf&autoboot=desktop%20filer_run%20adfs::0.$.!Snowscape) (further draw distance)\
+[SnowScape A3020 Version](https://archi.medes.live#preset=a3020&ff=14400&disc=https://raw.githubusercontent.com/arkiruthis/snowscape/76909172634979cdaf4dc8cd4e31dbfa24f17d27/Images/snowscapeA3020.adf&autoboot=desktop%20filer_run%20adfs::0.$.!Snowscape) 
+
 
 #### Controls
 LEFT CLICK - Move forwards\
@@ -25,6 +26,7 @@ ESCAPE - Return to RISCOS
 ### Known Issues
 - Very large triangles close to the camera corrupt in the view. This is because the DY required to calculate the gradient is larger than the reciprocal multiplication lookup, so the routine keeps halfing DX and DY until it fits. This results in harsh gradient inaccuracy. TODO - We can jump to a dedicated divide routine to fix this (which Zarch, etc. does). 
 - When you reach the edge of the terrain, you'll be abruptly reset to the starting position. TODO - like the original Midwinter, we could reset the camera and generate the terrain to match the next section you're in. 
+- Performance could probably be improved by moving more C into ARM assembly... but it's worth playing the original Midwinter on a stock STFM or A500 as a reminder of the original framerate... :P 
 
 ### Building Prerequisites
 - RPCEmu or Arculator
@@ -58,3 +60,5 @@ The Maelstrom team (particularly in memory of [Mike Singleton](https://en.wikipe
 David Ruck for his superb [TimerMod](https://armclub.org.uk/free/) utility which is available from his site which made profiling many of the routines far easier.
 
 The amazing [Bitshifters](https://bitshifters.github.io/index.html) team for always being generous with their knowledge and pushing the Archimedes and BBC Micro to it's limits with their amazing demos!
+
+Tom Sneddon for helping me fix the CORS issue which means we can link to Archimedes Live! direct from here. Also check out `b2`, his amazing [BBC Micro Emulator](https://github.com/tom-seddon/b2)! 
