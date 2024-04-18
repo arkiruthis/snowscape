@@ -11,10 +11,10 @@ Click on the image for a YouTube recording in Arculator\
 [![Click on the image for a YouTube recording in Arculator](terrain.png)](http://www.youtube.com/watch?v=fiJSxuPCPes "YouTube Video")
 
 ### QuickStart and Controls
-Thanks to the amazing [Archimedes Live!](https://archi.medes.live/) you can run a prebuilt version directly in the browser.
+Thanks to the amazing [Archimedes Live!](https://archi.medes.live/) you can run a prebuilt version directly in the browser. The following ADF files can be loaded via the emulator and run from the emulated floppy drive.
 
-[SnowScape A5000 Version](https://archi.medes.live#preset=a5000&ff=14400) (further draw distance)\
-[SnowScape A3020 Version](https://archi.medes.live#preset=a3020&ff=14400) (more limited, but good performance on lower end machines)
+[SnowScape A5000 Version (ADF)](https://github.com/arkiruthis/snowscape/releases/download/v1.0.0/snowscapeA5000.adf) (further draw distance)\
+[SnowScape A3020 Version (ADF)](https://github.com/arkiruthis/snowscape/releases/download/v1.0.0/snowscapeA3020.adf) (more limited, but good performance on lower end machines)
 
 #### Controls
 LEFT CLICK - Move forwards\
