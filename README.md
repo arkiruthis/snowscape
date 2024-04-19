@@ -27,6 +27,7 @@ ESCAPE - Return to RISCOS
 - Very large triangles close to the camera corrupt in the view. This is because the DY required to calculate the gradient is larger than the reciprocal multiplication lookup, so the routine keeps halfing DX and DY until it fits. This results in harsh gradient inaccuracy. TODO - We can jump to a dedicated divide routine to fix this (which Zarch, etc. does). 
 - When you reach the edge of the terrain, you'll be abruptly reset to the starting position. TODO - like the original Midwinter, we could reset the camera and generate the terrain to match the next section you're in. 
 - Performance could probably be improved by moving more C into ARM assembly... but it's worth playing the original Midwinter on a stock STFM or A500 as a reminder of the original framerate... :P 
+- Why is there a blue line at the bottom? Because when I draw there I get a stack heap corruption on exit. 😱 It'll be something trivial, it always is... 
 
 ### Building Prerequisites
 - RPCEmu or Arculator
