@@ -30,7 +30,9 @@ ESCAPE - Return to RISCOS
 
 ### Building Prerequisites
 - RPCEmu or Arculator
-- Acorn C++ (available in [RPCEmu Easy-Start bundle](https://www.marutan.net/rpcemu/index.php))
+- Acorn C++ / DDE 
+  - Modern DDE with (32bit C99 support and more) available from [RiscOS Open](https://riscosopen.org/content/sales/dde)
+  - Last major release (26bit C89 support) is included in the [RPCEmu Easy-Start bundle](https://www.marutan.net/rpcemu/index.php)
 
 ### Building
 1. Checkout the repo and copy (or ideally, symlink for ease of development) the `Project` folder into your `hostfs` folder for your emulator.
