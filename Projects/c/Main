@@ -199,6 +199,7 @@ int main(int argc, char *argv[])
     SetupMathsGlobals(0);
     SetupPaletteLookup(0);
     printf("Heading: %d, Pitch: %d\n", heading, pitch);
+    printf("Eyepos: %d, %d, %d\n", eyePos.x, eyePos.y, eyePos.z);
 
     // (void)getchar(); // Uncomment to pause here and read data output
 

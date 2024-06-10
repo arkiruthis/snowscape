@@ -4,15 +4,9 @@
 #include "Math3D.h"
 #include "CVector.h"
 
-#ifdef A5000
-    #define MAPW 128
-    #define _MAPW 127
-    #define MAPSHIFT 7
-#else // A3000
-    #define MAPW 64
-    #define _MAPW 63
-    #define MAPSHIFT 6
-#endif // A5000
+#define MAPW 128
+#define _MAPW 127
+#define MAPSHIFT 7
 
 #define TILESHIFT 4 // 16x16 tiles
 #define IX(x, z) (((x) & _MAPW) + (((z) & _MAPW) << (MAPSHIFT)))
