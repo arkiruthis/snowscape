@@ -29,7 +29,7 @@ VDUSetup
 ; Save the memory buffer details from the C side
 ; TODO - We can do this all on the ASM side... stop using the kernel SWI C funcs.
 
-        EXPORT  SetBuffers ; (R1: oneOver, R2: leftEdgeList, R3: rightEdgeList)
+        EXPORT  SetBuffers ; (R1: oneOver, R2: edgeList R3: Fogtable)
 SetBuffers
         STR a1,OneOver
         STR a2,EdgeList
@@ -474,15 +474,21 @@ CalcLongSide
         SUB r14,v3_Y,v1_Y          ; y3 - y1
         SUB r1,v3_X,v1_X           ; x3 - x1
 
-ClipLongReciprocal
         CMP r14,#&400           ; Due to reciprocal limit, we need to limit the gradient inputs
-        MOVGE r14,r14,ASR#1
-        MOVGE r1,r1,ASR#1
-        BGE ClipLongReciprocal                ; Loop until y delta is less than 1024
+        BLT LongSideTableLookup
 
+        STMFD sp!,{r1,r14} ; Store the current registers
+        MOV r0,r1
+        MOV r1,r14
+        BL GenericDivide
+        LDMFD sp!,{r1,r14} ; Restore the current registers
+        B LongSideGradientSafe
+
+LongSideTableLookup
         LDR r6,OneOver          ; start of oneOver block
         LDR r3,[r6,r14,LSL#2]    ; >> 16 << 2 (4 byte jump)
         MUL r0_LongGradient,r3,r1  ; Store m in r0, r3 is available
+LongSideGradientSafe
 
         ; CLIPPING
         ; If our middle vertex is above the screen we need the longside to catch up
@@ -504,16 +510,22 @@ CalcTopShortSide
         BLE CalcBottomShortSide                         ; Flat top triangle, skip the top part
 
         CMP r14,#&400 ; Due to reciprocal limit, we need to limit the gradient inputs
-        BLT TopRecipSafe ; Fine, continue
-11
-        MOV r14,r14,ASR#1
-        MOV r2,r2,ASR#1
-        CMP r14,#&400 ; Due to reciprocal limit, we need to limit the gradient inputs
-        BGE %BT11 ; Loop until y delta is less than 1024
+        BLT TopTableLookup
 
-TopRecipSafe
+        STMFD sp!,{r0,r2,r4-r6,r14} ; Store the current registers
+        MOV r0,r2
+        MOV r1,r14
+        BL GenericDivide
+        MOV r1,r0
+        LDMFD sp!,{r0,r2,r4-r6, r14} ; Restore the current registers
+        B TopGradientSafe
+
+TopTableLookup
+        LDR r6,OneOver          ; start of oneOver block
         LDR r4,[r6,r14,LSL#2]
         MUL r1_ShortGradient,r4,r2
+
+TopGradientSafe
         LDR r2_EdgeList,EdgeList
 
         SUB r14,v2_Y,v1_Y       ; Need to reset the y delta
@@ -564,16 +576,22 @@ CalcBottomShortSide
         SUB r1_ShortGradient,v3_X,v2_X ; x3 - x2
 
         CMP r14,#&400            ; Due to reciprocal limit, we need to limit the gradient inputs
-        BLT BottomRecipSafe ; Fine, continue
-13
-        MOV r14,r14,ASR#1
-        MOV r1_ShortGradient,r1_ShortGradient,ASR#1
-        CMP r14,#&400
-        BGE %BT13                ; Loop until y delta is less than 1024
+        BLT BottomTableLookup
 
-BottomRecipSafe
+        STMFD sp!,{r0,r2,r4-r6,r14} ; Store the current registers
+        MOV r0,r1
+        MOV r1,r14
+        BL GenericDivide
+        MOV r1,r0
+        LDMFD sp!,{r0,r2,r4-r6, r14} ; Restore the current registers
+        B BottomGradientSafe
+
+BottomTableLookup
+        LDR r6,OneOver          ; start of oneOver block
         LDR r5,[r6,r14,LSL#2]    ; >> 16 << 2 (4 byte jump)
         MUL r1_ShortGradient,r5,r1_ShortGradient
+
+BottomGradientSafe
         MOV r5,v2_X,ASL#16         ; x2 to fixed point
 
         SUB r14,v3_Y,v2_Y      ; Need to reset the y delta
@@ -778,6 +796,34 @@ KeyPress
         MOV r2,#255
         SWI OS_Byte
         MOV r0,r1; r0 contains either 0xFF or 0x00
+        MOV pc,lr
+
+        ; EXPORT GenericDivide
+GenericDivide ROUT
+        ; Enter with dividend in R0, divisor in R1.
+        ; Trashes R4 - R6.
+        ; Returns with quotient in R0.
+        ; The divisor must not be zero. The dividend can be negative.
+        CMP     R0, #0
+        MOVEQ   pc, lr
+
+        MOVS    R4, R0          ; Store, as we need to check sign
+        RSBMI   R0, R0, #0      ; Make positive
+
+        MOV     R1, R1, LSL#16  ; Int to Fix
+        MOV     R6, #0          ; Result in R6
+        MOV     R5, #&80000000  ; Used as a counter until bit is pushed off end
+10      MOVS    R0, R0, LSL#1   ; Double R0 and store status
+        CMPCC   R0, R1          
+        SUBCS   R0, R0, R1      
+        ORRCS   R6, R6, R5      
+        MOVS    R5, R5, LSR #1
+        BCC     %BT10
+
+        CMP     R4, #0  
+        RSBMI   R0, R6, #0      
+        MOVPL   R0, R6
+
         MOV pc,lr
 
         EXPORT ProjectVertex ; ProjectVertex(int vertexPtr);
